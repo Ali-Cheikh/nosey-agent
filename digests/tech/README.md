@@ -51,3 +51,4 @@
 - [Saturday, September 26, 2026](./2026-09-26.md) — 15 stories
 - [Sunday, September 27, 2026](./2026-09-27.md) — 10 stories
 - [Monday, September 28, 2026](./2026-09-28.md) — 14 stories
+- [Thursday, October 1, 2026](./2026-10-01.md) — 15 stories
