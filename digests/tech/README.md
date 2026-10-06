@@ -54,3 +54,4 @@
 - [Thursday, October 1, 2026](./2026-10-01.md) — 15 stories
 - [Friday, October 2, 2026](./2026-10-02.md) — 15 stories
 - [Monday, October 5, 2026](./2026-10-05.md) — 10 stories
+- [Tuesday, October 6, 2026](./2026-10-06.md) — 15 stories
