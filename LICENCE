@@ -1,45 +1,18 @@
-Custom License — Personal Use & Proprietary Rights
-
+# Custom License — Personal Use & Proprietary Rights
 Copyright (c) 2026 Ali-Cheikh
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, strictly under the following conditions:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, strictly under the following conditions:
+## 1. Personal & Non-Commercial Use:
+The Software is made available primarily for personal, educational, and non‑commercial evaluation purposes. Any commercial use, including but not limited to hosting the Software as a service, selling access to the generated digests, or using the Software for profit‑generating activities, is strictly prohibited without explicit written permission from the Author.
+## 2. Author's Benefit & Automated Operations:
+The Software includes automated scripts (including GitHub Actions workflows) designed to fetch, process, and store news data ("Automated Services"). These Automated Services are operated explicitly and exclusively for the benefit, convenience, and internal use of the Author (Ali-Cheikh). The repository content, source code, and automated digests are maintained active for the Author's personal daily benefit. Any reproduction, re‑hosting, or re‑purposing of these Automated Services for the benefit of a third party is expressly forbidden without prior written consent from the Author.
+## 3. Redistribution & Attribution:
+Redistribution of the Software in its original or modified form is permitted for non‑commercial purposes, provided that:
 
-1. Personal & Non-Commercial Use:
-   The Software is made available primarily for personal, educational, and
-   non‑commercial evaluation purposes. Any commercial use, including but not
-   limited to hosting the Software as a service, selling access to the
-   generated digests, or using the Software for profit‑generating activities,
-   is strictly prohibited without explicit written permission from the Author.
+* The above copyright notice, this list of conditions, and the following disclaimer are included in all copies or substantial portions of the Software.
+* Proper attribution is given to the Author (Ali-Cheikh).
+* The redistributed software does not impersonate or misrepresent its relationship with the Author.
 
-2. Author's Benefit & Automated Operations:
-   The Software includes automated scripts (including GitHub Actions workflows)
-   designed to fetch, process, and store news data ("Automated Services").
-   These Automated Services are operated explicitly and exclusively for the
-   benefit, convenience, and internal use of the Author (Ali-Cheikh). The
-   repository content, source code, and automated digests are maintained
-   active for the Author's personal daily benefit. Any reproduction,
-   re‑hosting, or re‑purposing of these Automated Services for the benefit
-   of a third party is expressly forbidden without prior written consent
-   from the Author.
+## 4. No Warranty:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-3. Redistribution & Attribution:
-   Redistribution of the Software in its original or modified form is permitted
-   for non‑commercial purposes, provided that:
-     - The above copyright notice, this list of conditions, and the following
-       disclaimer are included in all copies or substantial portions of the
-       Software.
-     - Proper attribution is given to the Author (Ali-Cheikh).
-     - The redistributed software does not impersonate or misrepresent its
-       relationship with the Author.
-
-4. No Warranty:
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
