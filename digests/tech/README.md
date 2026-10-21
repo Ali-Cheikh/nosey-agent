@@ -64,3 +64,4 @@
 - [Friday, October 16, 2026](./2026-10-16.md) — 15 stories
 - [Sunday, October 18, 2026](./2026-10-18.md) — 10 stories
 - [Tuesday, October 20, 2026](./2026-10-20.md) — 15 stories
+- [Wednesday, October 21, 2026](./2026-10-21.md) — 15 stories
