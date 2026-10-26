@@ -278,3 +278,12 @@ The Markdown file will appear in `digests/tech/`.
 ## Cost: $0 / month
 
 Gemini, GitHub Actions, and Resend free tiers cover daily runs of all agents. Nosey doesn't cost a penny.
+
+## star?
+```js
+console.log("====================================================");
+console.log("👃 Nosey successfully sniffed out your news for today!");
+console.log("⭐ Enjoying your zero-cost digest?");
+console.log("👉 Drop a star on: https://github.com");
+console.log("====================================================");
+```
