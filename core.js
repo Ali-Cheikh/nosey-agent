@@ -123,51 +123,110 @@ function createAgent(CONFIG) {
     }
   }
 
-  // HTML Email Builder
+  // HTML Email Builder — design C: ranked cards + buzz meter
+  // Themeless: every surface has an explicit bgcolor + inline background and
+  // color-scheme is locked, so the email looks identical in light/dark clients.
   function buildHTML(stories, date) {
-    const top = stories[0];
-    const tc  = CONFIG.THEME_COLOR || "#8892a4";
+    const tc    = CONFIG.THEME_COLOR || "#6c8cff"; // accent
+    const PAGE  = "#10131a";
+    const CARD  = "#171b26";
+    const WHITE = "#ffffff";
+    const SOFT  = "#9aa4bd";
+    const MUTE  = "#667089";
+    const DIM   = "#3d4a73";
+    const OFF   = "#2a3350";
+    const FONT  = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
-    const topBlock =
-      '<div style="background:#111620;border:1px solid #2a3050;border-radius:10px;padding:16px 18px;margin-bottom:18px;">' +
-      '<div style="font-size:9px;font-weight:700;color:' + tc + ';letter-spacing:.1em;margin-bottom:7px;">🔥 TOP STORY TODAY</div>' +
-      '<a href="' + top.link + '" style="text-decoration:none;">' +
-      '<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:5px;">' + top.headline + '</div></a>' +
-      '<div style="font-size:11px;color:#8892a4;margin-bottom:7px;">' + top.summary + '</div>' +
-      '<div style="font-size:10px;color:#3a4468;">💡 ' + top.why_it_matters + '</div>' +
-      (top.source_count > 1 ? '<div style="font-size:9px;color:#2a3a50;margin-top:6px;">' + top.source_count + ' outlets</div>' : '') +
-      '</div>';
+    const esc = s => String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const safeUrl = u => /^https?:\/\//i.test(u || "") ? esc(u) : "";
 
-    const rows = stories.slice(1).map((s, i) =>
-      '<tr>' +
-      '<td style="padding:4px 10px;border-bottom:1px solid #1e2230;color:#2a3050;font-size:10px;vertical-align:top;">' + (i+2) + '</td>' +
-      '<td style="padding:9px 14px;border-bottom:1px solid #1e2230;vertical-align:top;">' +
-      '<a href="' + s.link + '" style="text-decoration:none;"><strong style="color:#d4dcf0;font-size:12px;">' + s.headline + '</strong></a><br>' +
-      '<span style="color:#8892a4;font-size:11px;">' + s.summary + '</span><br>' +
-      '<span style="color:#3a4468;font-size:10px;">💡 ' + s.why_it_matters + '</span></td>' +
-      '<td style="padding:9px 8px;border-bottom:1px solid #1e2230;white-space:nowrap;vertical-align:top;">' +
-      '<span style="background:#1a1e2a;color:' + tc + ';border:1px solid #2a2e3e;border-radius:8px;padding:2px 6px;font-size:9px;font-weight:700;">' + s.category + '</span>' +
-      (s.source_count > 1 ? '<div style="font-size:8px;color:#2a3a50;">' + s.source_count + '×</div>' : '') +
-      '</td>' +
-      '<td style="padding:9px 8px;border-bottom:1px solid #1e2230;color:#2a3468;font-size:9px;">' + s.source + '</td>' +
-      '</tr>'
-    ).join("");
+    // Always-white clickable headline (arrow in accent)
+    const headline = (s, size) => {
+      const url   = safeUrl(s.link);
+      const inner = '<span style="color:' + WHITE + ';font-size:' + size + 'px;font-weight:700;line-height:1.3;">' + esc(s.headline) + '</span>';
+      return url
+        ? '<a href="' + url + '" target="_blank" class="lnk" style="color:' + WHITE + ';text-decoration:none;">' +
+          inner + ' <span style="color:' + tc + ';font-size:' + size + 'px;">&#8599;</span></a>'
+        : inner;
+    };
 
-    return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>' +
-      '<body style="background:#0d0f14;margin:0;padding:20px 14px;font-family:system-ui,sans-serif;">' +
-      '<div style="max-width:680px;margin:0 auto;">' +
-      '<h1 style="color:#fff;font-size:17px;margin-bottom:3px;">' + CONFIG.AGENT_EMOJI + ' ' + CONFIG.AGENT_NAME + '</h1>' +
-      '<p style="color:#3a4468;font-size:10px;margin-bottom:16px;">' + date + ' · ' + stories.length + ' stories · Gemini</p>' +
-      topBlock +
-      '<table style="width:100%;border-collapse:collapse;background:#13161e;border-radius:8px;overflow:hidden;">' +
-      '<thead><tr>' +
-      '<th style="background:#0f1220;color:#1e2640;font-size:8px;padding:7px 10px;text-align:left;">#</th>' +
-      '<th style="background:#0f1220;color:#1e2640;font-size:8px;padding:7px 14px;text-align:left;">STORY</th>' +
-      '<th style="background:#0f1220;color:#1e2640;font-size:8px;padding:7px 8px;text-align:left;">CAT</th>' +
-      '<th style="background:#0f1220;color:#1e2640;font-size:8px;padding:7px 8px;text-align:left;">SOURCE</th>' +
-      '</tr></thead><tbody>' + rows + '</tbody></table>' +
-      '<p style="color:#1a2040;font-size:9px;margin-top:12px;text-align:center;">auto-committed daily · Gemini 2.5 Flash + RSS</p>' +
-      '</div></body></html>';
+    // Buzz meter: filled dots = outlets covering the story (max 5)
+    const meter = n => {
+      const c = Math.min(Math.max(parseInt(n, 10) || 1, 1), 5);
+      return '<span style="color:' + tc + ';">' + "●".repeat(c) + '</span>' +
+             '<span style="color:' + OFF + ';">' + "●".repeat(5 - c) + '</span>';
+    };
+    const outlets = s => (s.source_count > 1 ? s.source_count + " outlets" : "1 outlet");
+
+    const spacer = '<div style="height:10px;line-height:10px;font-size:10px;">&nbsp;</div>';
+
+    const card = (s, i) => {
+      const top    = i === 0;
+      const rank   = String(i + 1).padStart(2, "0");
+      const border = top ? "1px solid " + tc : "1px solid " + CARD;
+      const pad    = top ? "16px" : "13px 14px";
+      return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + CARD + '" ' +
+        'style="background-color:' + CARD + ';border:' + border + ';border-radius:12px;border-collapse:separate;">' +
+        '<tr><td style="padding:' + pad + ';font-family:' + FONT + ';">' +
+          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+            '<td align="left" style="font-family:' + FONT + ';font-size:' + (top ? 26 : 18) + 'px;font-weight:800;color:' + (top ? tc : DIM) + ';line-height:1;">' + rank + '</td>' +
+            '<td align="right" style="font-family:' + FONT + ';font-size:10px;color:' + SOFT + ';white-space:nowrap;">' + outlets(s) + ' &nbsp;' + meter(s.source_count) + '</td>' +
+          '</tr></table>' +
+          '<div style="height:8px;line-height:8px;font-size:8px;">&nbsp;</div>' +
+          '<div style="font-family:' + FONT + ';">' + headline(s, top ? 18 : 15) + '</div>' +
+          '<div style="font-family:' + FONT + ';font-size:' + (top ? 13 : 12) + 'px;color:' + SOFT + ';line-height:1.5;margin-top:6px;">' + esc(s.summary) + '</div>' +
+          '<div style="font-family:' + FONT + ';font-size:12px;line-height:1.5;margin-top:6px;">' +
+            '<span style="color:' + tc + ';font-weight:700;">Why it matters</span> ' +
+            '<span style="color:' + SOFT + ';">' + esc(s.why_it_matters) + '</span></div>' +
+          '<div style="font-family:' + FONT + ';font-size:10px;color:' + MUTE + ';letter-spacing:.08em;margin-top:8px;">' +
+            esc(String(s.category || "").toUpperCase()) + ' &middot; ' + esc(s.source) + '</div>' +
+        '</td></tr></table>';
+    };
+
+    const preheader = esc(stories[0].headline) + (stories.length > 1 ? " + " + (stories.length - 1) + " more stories" : "");
+
+    return '<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head>' +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<meta name="color-scheme" content="light dark">' +
+      '<meta name="supported-color-schemes" content="light dark">' +
+      '<title>' + esc(CONFIG.AGENT_NAME) + ' — ' + esc(date) + '</title>' +
+      '<style>' +
+      ':root{color-scheme:light dark;supported-color-schemes:light dark;}' +
+      'body,table,td{background-color:' + PAGE + ';}' +
+      'a{color:' + WHITE + ' !important;text-decoration:none !important;}' +
+      'u + .body a{color:' + WHITE + ' !important;text-decoration:none !important;}' +
+      'a[x-apple-data-detectors]{color:inherit !important;text-decoration:none !important;}' +
+      '[data-ogsc] .lnk,[data-ogsc] .lnk span{color:' + WHITE + ' !important;}' +
+      '@media (max-width:620px){.wrap{width:100% !important;}}' +
+      '</style></head>' +
+      '<body class="body" bgcolor="' + PAGE + '" style="margin:0;padding:0;background-color:' + PAGE + ';">' +
+      '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:' + PAGE + ';font-size:1px;line-height:1px;">' + preheader + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + PAGE + '" style="background-color:' + PAGE + ';">' +
+      '<tr><td align="center" bgcolor="' + PAGE + '" style="background-color:' + PAGE + ';padding:22px 12px;">' +
+      '<table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="' + PAGE + '" style="width:600px;max-width:100%;background-color:' + PAGE + ';">' +
+      '<tr><td bgcolor="' + PAGE + '" style="background-color:' + PAGE + ';font-family:' + FONT + ';">' +
+        '<div style="font-family:' + FONT + ';font-size:22px;font-weight:800;color:' + WHITE + ';">' +
+          esc(CONFIG.AGENT_EMOJI) + ' ' + esc(CONFIG.AGENT_NAME) +
+          ' <span style="font-size:11px;font-weight:400;color:' + MUTE + ';margin-left:6px;">' + esc(date) + '</span></div>' +
+        '<div style="font-family:' + FONT + ';font-size:11px;color:' + MUTE + ';margin-top:4px;">' + stories.length + ' stories &middot; ranked by importance</div>' +
+        '<div style="height:3px;line-height:3px;font-size:3px;background-color:' + tc + ';border-radius:2px;margin:14px 0 16px;">&nbsp;</div>' +
+        stories.map((s, i) => card(s, i)).join(spacer) +
+        '<div style="font-family:' + FONT + ';font-size:10px;color:' + OFF + ';text-align:center;margin-top:18px;">auto-committed daily &middot; Gemini 2.5 Flash + RSS</div>' +
+      '</td></tr></table>' +
+      '</td></tr></table></body></html>';
+  }
+
+  // Plain-text fallback (used by clients that don't render HTML)
+  function buildText(stories, date) {
+    return CONFIG.AGENT_NAME + " — " + date + "\n\n" +
+      stories.map((s, i) =>
+        (i + 1) + ". " + s.headline + "\n   " + s.summary + "\n   Why it matters: " + s.why_it_matters +
+        "\n   " + s.category + " · " + (s.source_count > 1 ? s.source_count + " outlets" : s.source) +
+        (s.link ? "\n   " + s.link : "")
+      ).join("\n\n");
   }
 
   // Markdown Files Builder
@@ -230,6 +289,7 @@ function createAgent(CONFIG) {
         from, to: process.env.EMAIL_TO.split(","),
         subject: CONFIG.AGENT_EMOJI + " " + CONFIG.AGENT_NAME + " — " + date,
         html: buildHTML(stories, date),
+        text: buildText(stories, date),
       });
       if (error) console.error("   Email error:", error);
       else        console.log("   ✓ Sent " + data.id + "\n");
