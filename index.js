@@ -9,7 +9,7 @@ const CONFIG = {
   AGENT_EMOJI:       "🌐",
   THEME_COLOR:       "#22d3ee",
   DIGEST_DIR:        "digests/tech",
-  TIME_WINDOW_HOURS: 48,   // was 24 — matches the "last 48 hours" include rule
+  TIME_WINDOW_HOURS: 48,
   ITEMS_PER_FEED:    10,
   SNIPPET_LENGTH:    350,
   MODEL:             "gemini-2.5-flash",
@@ -19,98 +19,86 @@ const CONFIG = {
   EMAIL_FROM:        "contact@tccards.tn",
   IMPACT_VERBS:      "Lets / Makes / Gives / Cuts / Adds / Brings / Signals / Shifts",
 
-  // ─── FEEDS (International) ──────────────────────────────
+  // ─── FEEDS (Global, tech-first) ─────────────────────────
   FEEDS: [
-    // 🇺🇸 美国 (核心科技)
-    "https://feeds.arstechnica.com/arstechnica/index",       // 深度科技、硬件、科学
-    "https://www.theverge.com/rss/index.xml",                // 消费科技与文化
-    "https://techcrunch.com/feed/",                          // 初创企业与风投
-    "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", // 美国主流科技
-    "https://feeds.a.dj.com/rss/RSSWSJD.xml",                // 华尔街日报科技 (商业/企业)
-    "https://www.cnet.com/rss/news/",                        // 综合科技新闻
-    "https://www.wired.com/feed/rss",                        // Wired – tech and culture (new)
-    "https://www.engadget.com/rss.xml",                      // Engadget – gadgets and launches (new)
-    "https://www.tomshardware.com/feeds/all",                // Tom's Hardware – chips, PC hardware (new)
-    "https://www.techradar.com/rss",                         // TechRadar – products and reviews (new)
+    // US
+    "https://feeds.arstechnica.com/arstechnica/index",             // Ars Technica – deep tech, hardware, science
+    "https://www.theverge.com/rss/index.xml",                      // The Verge – consumer tech
+    "https://techcrunch.com/feed/",                                // TechCrunch – startups, AI, venture
+    "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", // NYT Technology
+    "https://feeds.a.dj.com/rss/RSSWSJD.xml",                      // WSJ Tech
+    "https://www.cnet.com/rss/news/",                              // CNET – general tech news
+    "https://www.wired.com/feed/rss",                              // Wired
+    "https://www.engadget.com/rss.xml",                            // Engadget – gadgets and launches
+    "https://www.tomshardware.com/feeds/all",                      // Tom's Hardware – chips, PC hardware
+    "https://www.techradar.com/rss",                               // TechRadar – products
 
-    // 🇪🇺 欧洲 & 英国
-    "http://feeds.bbci.co.uk/news/technology/rss.xml",       // BBC 科技 (英国/全球)
-    "https://www.theregister.com/headlines.rss",             // The Register (英国) – 辛辣、深度IT
-    "https://tech.eu/feed/",                                 // 欧洲初创企业与风投 (was 403, retry with new headers)
-    "https://www.theguardian.com/us/technology/rss",         // 卫报科技 (欧洲视角)
-    // heise English feed returned 404 — removed
+    // Europe and UK
+    "http://feeds.bbci.co.uk/news/technology/rss.xml",             // BBC Technology
+    "https://www.theregister.com/headlines.rss",                   // The Register – IT, deep and sharp
+    "https://tech.eu/feed/",                                       // Tech.eu – European startups (may block bots)
+    "https://www.theguardian.com/us/technology/rss",               // The Guardian Technology
 
-    // 🌏 亚太地区
-    "https://asia.nikkei.com/rss/feed/nar",                  // 日经亚洲 – new URL (old one was 404)
-    "https://technode.com/feed/",                            // TechNode – 中国科技生态
-    "https://www.scmp.com/rss/91/feed",                      // 南华早报科技 – 香港/东南亚
-    "https://www.techinasia.com/feed",                       // Tech in Asia (was 403, retry with new headers)
+    // Asia-Pacific
+    "https://asia.nikkei.com/rss/feed/nar",                        // Nikkei Asia – Japan, SE Asia, semiconductors
+    "https://technode.com/feed/",                                  // TechNode – China tech ecosystem
+    "https://www.scmp.com/rss/91/feed",                            // SCMP Tech – Hong Kong, SE Asia
+    "https://www.techinasia.com/feed",                             // Tech in Asia – SE Asia startups (may block bots)
 
-    // 🔐 安全与隐私
-    "https://krebsonsecurity.com/feed/",                     // Krebs – 顶级安全记者
-    "https://www.troyhunt.com/rss/",                         // Troy Hunt – 安全与隐私
-    "https://www.bleepingcomputer.com/feed/",                // BleepingComputer – daily security news (new)
+    // Security and privacy
+    "https://krebsonsecurity.com/feed/",                           // Krebs on Security
+    "https://www.troyhunt.com/rss/",                               // Troy Hunt
+    "https://www.bleepingcomputer.com/feed/",                      // BleepingComputer – daily security news
 
-    // 🧠 开发者与深度技术
-    "https://hnrss.org/frontpage",                           // Hacker News – 社区驱动
-    "https://simonwillison.net/atom/everything/",            // Simon Willison – AI、LLM、Python
-    "https://www.jeffgeerling.com/blog.xml",                 // Jeff Geerling – DevOps、硬件、树莓派
+    // Developers and deep tech
+    "https://hnrss.org/frontpage",                                 // Hacker News front page
+    "https://simonwillison.net/atom/everything/",                  // Simon Willison – AI, LLMs, Python
+    "https://www.jeffgeerling.com/blog.xml",                       // Jeff Geerling – DevOps, hardware, Raspberry Pi
 
-    // 🏢 企业级 & B2B
-    "https://www.infoworld.com/feed/",                       // InfoWorld – 企业IT、云计算
-    "https://www.zdnet.com/news/rss.xml",                    // ZDNet – 企业科技与评测
+    // Enterprise and cloud
+    "https://www.infoworld.com/feed/",                             // InfoWorld – enterprise IT, cloud
+    "https://www.zdnet.com/news/rss.xml",                          // ZDNet – enterprise tech
   ],
 
   // ─── EXCLUDE KEYWORDS (Pre-filter) ─────────────────────
-  // These are removed BEFORE Gemini sees them (deterministic filter)
-  // Matched as WHOLE WORDS now, so "ipo" no longer catches "tripod" etc.
+  // Removed BEFORE Gemini sees them. Whole-word match.
+  // Tech business (funding, acquisitions, earnings, lawsuits) is now ALLOWED.
+  // Only clearly non-tech noise is dropped here.
   EXCLUDE_KEYWORDS: [
-    // Business noise (still exclude these)
-    "earnings", "quarterly results", "ipo", "acquires", "acquisition",
-    "funding round", "series a", "series b", "valuation",
-    "sec filing", "antitrust", "lawsuit", "layoffs", "laid off",
-    "shares rose", "shares fell", "market cap", "analyst rating",
-    "patent", "trademark", "merger",
-
-    // Celebrity / lifestyle / sports (international noise)
-    "celebrity", "entertainment", "sports", "lifestyle", "fashion",
-    "travel", "horoscope", "recipe", "food", "movie", "film", "music",
+    "celebrity", "horoscope", "recipe", "fashion", "lifestyle",
+    "sports", "nfl", "nba", "soccer", "box office",
   ],
 
-  // ─── CATEGORIES (Expanded) ──────────────────────────────
-  CATEGORIES: "Smartphone|Laptop|Tablet|AI|Gaming|Chip|Wearable|Software|Auto|Home|Camera|Audio|Security|Enterprise|Cloud|Policy|Semiconductor|Developer|Startup|Other",
+  // ─── CATEGORIES ─────────────────────────────────────────
+  CATEGORIES: "Smartphone|Laptop|Tablet|AI|Gaming|Chip|Wearable|Software|Auto|Home|Camera|Audio|Security|Enterprise|Cloud|Policy|Semiconductor|Developer|Startup|Business|Other",
 
-  // ─── RANK CRITERIA (International-focused) ──────────────
+  // ─── RANK CRITERIA (global, tech first) ─────────────────
   RANK_CRITERIA: [
-    "1. Major product launches with confirmed specs, price, and global availability",
-    "2. Major OS or platform releases available to download now worldwide",
-    "3. AI tools or features consumers and developers can use today",
-    "4. Hardware announcements with confirmed ship dates and international availability",
-    "5. Software features rolling out now globally",
-    "6. Security vulnerabilities or breaches with confirmed impact (CVEs, 0-days)",
-    "7. Semiconductor, chip, or supply chain news affecting global markets",
-    "8. EU or international policy/regulation affecting tech (GDPR, AI Act, etc.)",
-    "9. Enterprise/cloud announcements with significant global impact",
-    "10. Everything else — community-driven (Hacker News, developer blogs)",
+    "1. Major product, hardware, or OS launches with real specs, price, or availability",
+    "2. AI models, tools, and features people can use today",
+    "3. Chips, semiconductors, and compute news that moves the industry",
+    "4. Security vulnerabilities and breaches with confirmed impact (CVEs, 0-days)",
+    "5. Big tech business with real industry impact: major acquisitions, large funding rounds, earnings from big tech, major lawsuits and antitrust actions",
+    "6. Software and platform updates rolling out now",
+    "7. Tech policy and regulation worldwide (EU, US, China, India, etc.)",
+    "8. Enterprise, cloud, and developer news with broad impact",
+    "9. Everything else tech-related, including community picks (Hacker News, dev blogs)",
   ].join("\n"),
 
-  // ─── INCLUDE RULES (International) ──────────────────────
+  // ─── INCLUDE RULES ──────────────────────────────────────
   INCLUDE_RULES: [
-    "- Directly affects consumers, developers, or enterprises globally",
-    "- Real product, feature, or security update someone can use or act on",
-    "- Announced or released within the last 48 hours",
-    "- Has concrete details: specs, price, release date, CVE, or demo",
-    "- Has international or multi-region relevance (not US-only)",
+    "- It is about technology: products, software, AI, chips, security, internet, or the tech industry",
+    "- It matters to a global tech audience, from any region of the world",
+    "- It is recent news from the last 48 hours",
+    "- It states real facts, not rumor",
   ].join("\n"),
 
-  // ─── EXCLUDE RULES (International) ──────────────────────
+  // ─── EXCLUDE RULES ──────────────────────────────────────
   EXCLUDE_RULES: [
-    "- Business-only: acquisitions, earnings, IPO, funding, layoffs (unless product impact)",
-    "- Legal-only: lawsuits, regulation without clear tech impact",
-    "- Speculation: reportedly, could, might, leaked, patents",
-    "- Crypto / NFT / blockchain (unless directly tied to major tech)",
-    "- Pure enterprise/B2B with no broad impact or consumer/developer angle",
-    "- US-only politics or regional news without international tech relevance",
+    "- Not about technology (general politics, sports, entertainment, lifestyle)",
+    "- Pure speculation or rumor (reportedly, could, might, leaked)",
+    "- Shopping deals, coupons, and product-review roundups",
+    "- Crypto / NFT price news (unless tied to a major tech story)",
   ].join("\n"),
 };
 // ══════════════════════════════════════════════════════════
