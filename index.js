@@ -9,7 +9,7 @@ const CONFIG = {
   AGENT_EMOJI:       "🌐",
   THEME_COLOR:       "#22d3ee",
   DIGEST_DIR:        "digests/tech",
-  TIME_WINDOW_HOURS: 24,
+  TIME_WINDOW_HOURS: 48,   // was 24 — matches the "last 48 hours" include rule
   ITEMS_PER_FEED:    10,
   SNIPPET_LENGTH:    350,
   MODEL:             "gemini-2.5-flash",
@@ -28,23 +28,28 @@ const CONFIG = {
     "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", // 美国主流科技
     "https://feeds.a.dj.com/rss/RSSWSJD.xml",                // 华尔街日报科技 (商业/企业)
     "https://www.cnet.com/rss/news/",                        // 综合科技新闻
+    "https://www.wired.com/feed/rss",                        // Wired – tech and culture (new)
+    "https://www.engadget.com/rss.xml",                      // Engadget – gadgets and launches (new)
+    "https://www.tomshardware.com/feeds/all",                // Tom's Hardware – chips, PC hardware (new)
+    "https://www.techradar.com/rss",                         // TechRadar – products and reviews (new)
 
     // 🇪🇺 欧洲 & 英国
     "http://feeds.bbci.co.uk/news/technology/rss.xml",       // BBC 科技 (英国/全球)
     "https://www.theregister.com/headlines.rss",             // The Register (英国) – 辛辣、深度IT
-    "https://tech.eu/feed/",                                 // 欧洲初创企业与风投
-    "https://www.heise.de/en/rss/news-atom.xml",             // Heise (德国) – 工程、政策
+    "https://tech.eu/feed/",                                 // 欧洲初创企业与风投 (was 403, retry with new headers)
     "https://www.theguardian.com/us/technology/rss",         // 卫报科技 (欧洲视角)
+    // heise English feed returned 404 — removed
 
     // 🌏 亚太地区
-    "https://asia.nikkei.com/feed/rss/tech",                 // 日经亚洲 – 日本/东南亚、半导体
+    "https://asia.nikkei.com/rss/feed/nar",                  // 日经亚洲 – new URL (old one was 404)
     "https://technode.com/feed/",                            // TechNode – 中国科技生态
     "https://www.scmp.com/rss/91/feed",                      // 南华早报科技 – 香港/东南亚
-    "https://www.techinasia.com/feed",                       // Tech in Asia – 东南亚初创企业
+    "https://www.techinasia.com/feed",                       // Tech in Asia (was 403, retry with new headers)
 
     // 🔐 安全与隐私
     "https://krebsonsecurity.com/feed/",                     // Krebs – 顶级安全记者
     "https://www.troyhunt.com/rss/",                         // Troy Hunt – 安全与隐私
+    "https://www.bleepingcomputer.com/feed/",                // BleepingComputer – daily security news (new)
 
     // 🧠 开发者与深度技术
     "https://hnrss.org/frontpage",                           // Hacker News – 社区驱动
@@ -58,6 +63,7 @@ const CONFIG = {
 
   // ─── EXCLUDE KEYWORDS (Pre-filter) ─────────────────────
   // These are removed BEFORE Gemini sees them (deterministic filter)
+  // Matched as WHOLE WORDS now, so "ipo" no longer catches "tripod" etc.
   EXCLUDE_KEYWORDS: [
     // Business noise (still exclude these)
     "earnings", "quarterly results", "ipo", "acquires", "acquisition",
