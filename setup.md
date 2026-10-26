@@ -284,6 +284,6 @@ Gemini, GitHub Actions, and Resend free tiers cover daily runs of all agents. No
 console.log("====================================================");
 console.log("👃 Nosey successfully sniffed out your news for today!");
 console.log("⭐ Enjoying your zero-cost digest?");
-console.log("👉 Drop a star on: https://github.com");
+console.log("👉 Drop a star on: "https://github.com/Ali-Cheikh/nosey-agent");
 console.log("====================================================");
 ```
