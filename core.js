@@ -7,7 +7,14 @@ const path                   = require("path");
 function createAgent(CONFIG) {
   const genAI  = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model  = genAI.getGenerativeModel({ model: CONFIG.MODEL || "gemini-2.5-flash" });
-  const parser = new Parser();
+  // Browser-like headers: fixes most "403" feeds
+  const parser = new Parser({
+    timeout: 15000,
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; DigestBot/1.0; +https://github.com)",
+      "Accept":     "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+    },
+  });
   const resend = process.env.RESEND_API_KEY
     ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -19,12 +26,13 @@ function createAgent(CONFIG) {
       try {
         const feed   = await parser.parseURL(url);
         const recent = feed.items
-          .filter(i => i.pubDate && new Date(i.pubDate) > cutoff)
+          // Atom feeds have isoDate but no pubDate — accept either
+          .filter(i => { const d = i.isoDate || i.pubDate; return d && new Date(d) > cutoff; })
           .slice(0, CONFIG.ITEMS_PER_FEED || 10)
           .map(i => ({
             title:   (i.title   || "").trim(),
             source:  feed.title,
-            pubDate: i.pubDate,
+            pubDate: i.isoDate || i.pubDate,
             link:    i.link || "",
             snippet: (i.contentSnippet || i.summary || "")
                        .slice(0, CONFIG.SNIPPET_LENGTH || 350).trim(),
@@ -36,12 +44,13 @@ function createAgent(CONFIG) {
     return items;
   }
 
-  // Filter - presetting harcoded filter ;)
+  // Filter - whole-word matching so "ipo" doesn't hit "tripod", "film" doesn't hit "filmmaker", etc.
   function preFilter(items) {
-    const kw     = (CONFIG.EXCLUDE_KEYWORDS || []).map(k => k.toLowerCase());
+    const kw     = (CONFIG.EXCLUDE_KEYWORDS || []).map(k =>
+      new RegExp("\\b" + k.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i"));
     const before = items.length;
     const out    = kw.length
-      ? items.filter(i => !kw.some(k => (i.title + " " + i.snippet).toLowerCase().includes(k)))
+      ? items.filter(i => !kw.some(r => r.test(i.title + " " + i.snippet)))
       : items;
     console.log("  Pre-filter: " + before + " → " + out.length + " (−" + (before - out.length) + ")");
     return out;
@@ -87,7 +96,8 @@ function createAgent(CONFIG) {
   async function analyzeNews(groups, rawCount, date) {
     const MIN = CONFIG.MIN_STORIES || 8;
     const MAX = CONFIG.MAX_STORIES || 12;
-    const prompt = [
+
+    const buildPrompt = (extra) => [
       "You are a senior " + CONFIG.AGENT_NAME + " editor. Today is " + date + ".",
       groups.length + " unique stories deduplicated from " + rawCount + " RSS entries.",
       "Stories with more outlets are more newsworthy.\n",
@@ -105,37 +115,55 @@ function createAgent(CONFIG) {
       "OUTPUT — critical: return ONLY a JSON array. Start with [ and end with ].",
       "No markdown. No backticks. No explanation. No text before or after.",
       'Schema: {"rank":1,"headline":"...","summary":"...","category":"' + CONFIG.CATEGORIES + '","source":"outlet","link":"https://...","source_count":2,"why_it_matters":"verb..."}',
-    ].join("\n");
+    ].join("\n") + (extra || "");
 
     const MAX_R = CONFIG.MAX_RETRIES || 3;
-    for (let i = 1; i <= MAX_R; i++) {
-      try {
-        const res   = await model.generateContent(prompt);
-        const text  = res.response.text().replace(/\`\`\`(?:json)?/g, "").trim();
-        const match = text.match(/\[[\s\S]*\]/);
-        if (!match) throw new Error("No JSON array found in response");
-        return JSON.parse(match[0]);
-      } catch (e) {
-        console.warn("  Attempt " + i + " failed: " + e.message);
-        if (i === MAX_R) throw e;
-        await new Promise(r => setTimeout(r, 2000 * i));
+    async function callModel(prompt) {
+      for (let i = 1; i <= MAX_R; i++) {
+        try {
+          const res   = await model.generateContent(prompt);
+          const text  = res.response.text().replace(/\`\`\`(?:json)?/g, "").trim();
+          const match = text.match(/\[[\s\S]*\]/);
+          if (!match) throw new Error("No JSON array found in response");
+          return JSON.parse(match[0]);
+        } catch (e) {
+          console.warn("  Attempt " + i + " failed: " + e.message);
+          if (i === MAX_R) throw e;
+          await new Promise(r => setTimeout(r, 2000 * i));
+        }
       }
     }
+
+    let stories = await callModel(buildPrompt());
+
+    // Top-up: if Gemini came back under the minimum, ask once more
+    if (stories.length < MIN && groups.length >= MIN) {
+      console.log("   Only " + stories.length + " stories (min " + MIN + ") — asking Gemini to top up...");
+      try {
+        const more = await callModel(buildPrompt(
+          "\n\nIMPORTANT: your previous answer had only " + stories.length + " stories. " +
+          "You MUST return at least " + MIN + ". Fill the gap with the next-best stories " +
+          "that still fit the INCLUDE rules, preferring well-sourced ones."
+        ));
+        if (more.length > stories.length) stories = more;
+      } catch (e) { console.warn("  Top-up failed, keeping first result: " + e.message); }
+    }
+    return stories;
   }
 
-  // HTML Email Builder — design C: ranked cards + buzz meter
-  // Themeless: every surface has an explicit bgcolor + inline background and
-  // color-scheme is locked, so the email looks identical in light/dark clients.
+  // HTML Email Builder — ranked cards + buzz meter
+  // Transparent page: only the cards carry a background, so the email sits
+  // naturally on a white OR dark inbox. All text lives inside solid cards.
   function buildHTML(stories, date) {
-    const tc    = CONFIG.THEME_COLOR || "#6c8cff"; // accent
-    const PAGE  = "#10131a";
-    const CARD  = "#171b26";
-    const WHITE = "#ffffff";
-    const SOFT  = "#9aa4bd";
-    const MUTE  = "#667089";
-    const DIM   = "#3d4a73";
-    const OFF   = "#2a3350";
-    const FONT  = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+    const tc     = CONFIG.THEME_COLOR || "#6c8cff"; // accent
+    const CARD   = "#171b26";
+    const BORDER = "#2a3350";
+    const WHITE  = "#ffffff";
+    const SOFT   = "#9aa4bd";
+    const MUTE   = "#7a85a3";
+    const DIM    = "#3d4a73";
+    const FOOT   = "#8a90a2"; // readable on white and dark
+    const FONT   = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
     const esc = s => String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -156,20 +184,32 @@ function createAgent(CONFIG) {
     const meter = n => {
       const c = Math.min(Math.max(parseInt(n, 10) || 1, 1), 5);
       return '<span style="color:' + tc + ';">' + "●".repeat(c) + '</span>' +
-             '<span style="color:' + OFF + ';">' + "●".repeat(5 - c) + '</span>';
+             '<span style="color:' + BORDER + ';">' + "●".repeat(5 - c) + '</span>';
     };
     const outlets = s => (s.source_count > 1 ? s.source_count + " outlets" : "1 outlet");
 
     const spacer = '<div style="height:10px;line-height:10px;font-size:10px;">&nbsp;</div>';
 
+    const shell = (inner, border) =>
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + CARD + '" ' +
+      'style="background-color:' + CARD + ';border:1px solid ' + border + ';border-radius:12px;border-collapse:separate;">' +
+      '<tr><td style="font-family:' + FONT + ';">' + inner + '</td></tr></table>';
+
+    const header =
+      shell(
+        '<div style="padding:18px 16px 16px;">' +
+          '<div style="font-family:' + FONT + ';font-size:22px;font-weight:800;color:' + WHITE + ';">' +
+            esc(CONFIG.AGENT_EMOJI) + ' ' + esc(CONFIG.AGENT_NAME) + '</div>' +
+          '<div style="font-family:' + FONT + ';font-size:11px;color:' + MUTE + ';margin-top:5px;">' +
+            esc(date) + ' &middot; ' + stories.length + ' stories &middot; ranked by importance</div>' +
+          '<div style="height:3px;line-height:3px;font-size:3px;background-color:' + tc + ';border-radius:2px;margin-top:14px;">&nbsp;</div>' +
+        '</div>', BORDER);
+
     const card = (s, i) => {
-      const top    = i === 0;
-      const rank   = String(i + 1).padStart(2, "0");
-      const border = top ? "1px solid " + tc : "1px solid " + CARD;
-      const pad    = top ? "16px" : "13px 14px";
-      return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + CARD + '" ' +
-        'style="background-color:' + CARD + ';border:' + border + ';border-radius:12px;border-collapse:separate;">' +
-        '<tr><td style="padding:' + pad + ';font-family:' + FONT + ';">' +
+      const top  = i === 0;
+      const rank = String(i + 1).padStart(2, "0");
+      return shell(
+        '<div style="padding:' + (top ? "16px" : "13px 14px") + ';">' +
           '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
             '<td align="left" style="font-family:' + FONT + ';font-size:' + (top ? 26 : 18) + 'px;font-weight:800;color:' + (top ? tc : DIM) + ';line-height:1;">' + rank + '</td>' +
             '<td align="right" style="font-family:' + FONT + ';font-size:10px;color:' + SOFT + ';white-space:nowrap;">' + outlets(s) + ' &nbsp;' + meter(s.source_count) + '</td>' +
@@ -182,7 +222,7 @@ function createAgent(CONFIG) {
             '<span style="color:' + SOFT + ';">' + esc(s.why_it_matters) + '</span></div>' +
           '<div style="font-family:' + FONT + ';font-size:10px;color:' + MUTE + ';letter-spacing:.08em;margin-top:8px;">' +
             esc(String(s.category || "").toUpperCase()) + ' &middot; ' + esc(s.source) + '</div>' +
-        '</td></tr></table>';
+        '</div>', top ? tc : BORDER);
     };
 
     const preheader = esc(stories[0].headline) + (stories.length > 1 ? " + " + (stories.length - 1) + " more stories" : "");
@@ -195,26 +235,21 @@ function createAgent(CONFIG) {
       '<title>' + esc(CONFIG.AGENT_NAME) + ' — ' + esc(date) + '</title>' +
       '<style>' +
       ':root{color-scheme:light dark;supported-color-schemes:light dark;}' +
-      'body,table,td{background-color:' + PAGE + ';}' +
       'a{color:' + WHITE + ' !important;text-decoration:none !important;}' +
       'u + .body a{color:' + WHITE + ' !important;text-decoration:none !important;}' +
       'a[x-apple-data-detectors]{color:inherit !important;text-decoration:none !important;}' +
       '[data-ogsc] .lnk,[data-ogsc] .lnk span{color:' + WHITE + ' !important;}' +
       '@media (max-width:620px){.wrap{width:100% !important;}}' +
       '</style></head>' +
-      '<body class="body" bgcolor="' + PAGE + '" style="margin:0;padding:0;background-color:' + PAGE + ';">' +
-      '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:' + PAGE + ';font-size:1px;line-height:1px;">' + preheader + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + PAGE + '" style="background-color:' + PAGE + ';">' +
-      '<tr><td align="center" bgcolor="' + PAGE + '" style="background-color:' + PAGE + ';padding:22px 12px;">' +
-      '<table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="' + PAGE + '" style="width:600px;max-width:100%;background-color:' + PAGE + ';">' +
-      '<tr><td bgcolor="' + PAGE + '" style="background-color:' + PAGE + ';font-family:' + FONT + ';">' +
-        '<div style="font-family:' + FONT + ';font-size:22px;font-weight:800;color:' + WHITE + ';">' +
-          esc(CONFIG.AGENT_EMOJI) + ' ' + esc(CONFIG.AGENT_NAME) +
-          ' <span style="font-size:11px;font-weight:400;color:' + MUTE + ';margin-left:6px;">' + esc(date) + '</span></div>' +
-        '<div style="font-family:' + FONT + ';font-size:11px;color:' + MUTE + ';margin-top:4px;">' + stories.length + ' stories &middot; ranked by importance</div>' +
-        '<div style="height:3px;line-height:3px;font-size:3px;background-color:' + tc + ';border-radius:2px;margin:14px 0 16px;">&nbsp;</div>' +
+      '<body class="body" style="margin:0;padding:0;">' +
+      '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;">' + preheader + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+      '<tr><td align="center" style="padding:20px 12px;">' +
+      '<table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">' +
+      '<tr><td style="font-family:' + FONT + ';">' +
+        header + spacer +
         stories.map((s, i) => card(s, i)).join(spacer) +
-        '<div style="font-family:' + FONT + ';font-size:10px;color:' + OFF + ';text-align:center;margin-top:18px;">auto-committed daily &middot; Gemini 2.5 Flash + RSS</div>' +
+        '<div style="font-family:' + FONT + ';font-size:10px;color:' + FOOT + ';text-align:center;margin-top:18px;">auto-committed daily &middot; Gemini 2.5 Flash + RSS</div>' +
       '</td></tr></table>' +
       '</td></tr></table></body></html>';
   }
