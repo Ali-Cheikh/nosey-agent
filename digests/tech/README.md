@@ -82,3 +82,4 @@
 - [Monday, November 9, 2026](./2026-11-09.md) — 15 stories
 - [Tuesday, November 10, 2026](./2026-11-10.md) — 15 stories
 - [Friday, November 13, 2026](./2026-11-13.md) — 15 stories
+- [Saturday, November 14, 2026](./2026-11-14.md) — 15 stories
