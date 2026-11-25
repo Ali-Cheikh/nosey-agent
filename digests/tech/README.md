@@ -92,3 +92,4 @@
 - [Sunday, November 22, 2026](./2026-11-22.md) — 15 stories
 - [Monday, November 23, 2026](./2026-11-23.md) — 15 stories
 - [Tuesday, November 24, 2026](./2026-11-24.md) — 15 stories
+- [Wednesday, November 25, 2026](./2026-11-25.md) — 15 stories
